@@ -1,6 +1,6 @@
-streamlit
-pandas
-transformers
-torch
-wordcloud
-matplotlib
+streamlit==1.39.0
+pandas==2.2.2
+matplotlib==3.9.2
+wordcloud==1.9.3
+transformers==4.44.2
+torch==2.4.1
