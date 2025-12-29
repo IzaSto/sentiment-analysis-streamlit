@@ -3,15 +3,13 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from transformers import pipeline
-import torch
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Web Scraping App", layout="wide")
 
-DATA_REVIEWS = "data/reviews_data.json"
 DATA_PRODUCTS = "data/products_data.json"
 DATA_TESTIMONIALS = "data/testimonials_data.json"
+DATA_REVIEWS = "data/reviews_with_sentiment.csv"   # IMPORTANT
 
 # ---------------- LOAD DATA ----------------
 @st.cache_data
@@ -19,22 +17,11 @@ def load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-reviews = pd.DataFrame(load_json(DATA_REVIEWS))
 products = pd.DataFrame(load_json(DATA_PRODUCTS))
 testimonials = pd.DataFrame(load_json(DATA_TESTIMONIALS))
 
+reviews = pd.read_csv(DATA_REVIEWS)
 reviews["date"] = pd.to_datetime(reviews["date"])
-
-# ---------------- LOAD MODEL ----------------
-@st.cache_resource
-def load_model():
-    return pipeline(
-        "sentiment-analysis",
-        model="distilbert-base-uncased-finetuned-sst-2-english",
-        device=-1
-    )
-
-sentiment_model = load_model()
 
 # ---------------- SIDEBAR ----------------
 section = st.sidebar.radio(
@@ -79,12 +66,6 @@ else:
         st.warning("No reviews found for this month.")
         st.stop()
 
-    # ---------- SENTIMENT ----------
-    results = sentiment_model(filtered["text"].tolist())
-
-    filtered["sentiment"] = [r["label"] for r in results]
-    filtered["confidence"] = [r["score"] for r in results]
-
     # ---------- BAR CHART ----------
     counts = filtered["sentiment"].value_counts()
 
@@ -94,6 +75,7 @@ else:
     ax.set_title("Sentiment Distribution")
     st.pyplot(fig)
 
+    # ---------- CONFIDENCE ----------
     st.write("Average confidence:")
     st.write(filtered.groupby("sentiment")["confidence"].mean())
 
